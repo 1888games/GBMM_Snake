@@ -26,8 +26,13 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 	public bool Channel15Output = false;
 	public bool Channel16Output = true;
 
+	List<Image> FlashingLights;
 
+	public Dictionary<int, List<string>> Numbers;
 
+	public float FlashCounter = 0f;
+
+	public float FlashSpeed = 1f;
 
 
 	private KeyCode [] keyCodes = {
@@ -63,7 +68,9 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 
 	// Start is called before the first frame update
 	void Start () {
-
+			
+		
+		FlashingLights = new List<Image> ();
 		MidiDevices = new List<string> ();
 
 		try {
@@ -90,6 +97,7 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 		Velocities.Add ("SnakeTail", 90);
 		Velocities.Add ("Food", 60);
 		Velocities.Add ("GameOver", 75);
+		Velocities.Add ("Digit", 50);
 
 		Channel1Outputs = new Dictionary<int, bool> ();
 		Channel15Outputs = new Dictionary<int, bool> ();
@@ -118,6 +126,193 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 		Output15Text.text = "15 - " + Channel15Outputs [OutputMode].ToString ();
 		Output16Text.text = "16 - " + Channel16Outputs [OutputMode].ToString ();
 
+
+
+	}
+
+
+	void SetupNumbers () {
+
+		Numbers = new Dictionary<int, List<string>> ();
+
+		int number = 0;
+
+		Numbers.Add (number, new List<string> ());
+
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add (" * ");
+		Numbers [number].Add (" * ");
+		Numbers [number].Add (" * ");
+		Numbers [number].Add (" * ");
+		Numbers [number].Add (" * ");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("*  ");
+		Numbers [number].Add ("***");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("***");
+
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("  *");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("*  ");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("***");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("*  ");
+		Numbers [number].Add ("*  ");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("  *");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+
+		number++;
+		Numbers.Add (number, new List<string> ());
+
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("* *");
+		Numbers [number].Add ("***");
+		Numbers [number].Add ("  *");
+		Numbers [number].Add ("  *");
+
+
+	}
+
+	List<int> GetIntArray (int num) {
+		List<int> listOfInts = new List<int> ();
+		while (num > 0) {
+			listOfInts.Add (num % 10);
+			num = num / 10;
+		}
+		listOfInts.Reverse ();
+		return listOfInts;
+	}
+
+
+	public void DisplayNumber (int number, bool reverse = false) {
+
+		ClearScreen (reverse);
+
+		if (number > 99)
+			number = 99;
+
+		List<int> digits = GetIntArray (number);
+
+		if (number < 10) {
+			digits.Insert (0, 0);
+		}
+		
+		if (number == 0) {
+			digits.Insert (0, 0);
+		}
+
+		Debug.Log (number);
+
+		foreach (int digit in digits) {
+
+			Debug.Log (digit);
+
+
+		}
+
+		DisplayDigit (digits [0], Numbers [digits [0]], 0, reverse);
+		DisplayDigit (digits [1], Numbers [digits [1]], 5, reverse);
+
+
+
+
+	}
+
+
+	void DisplayDigit (int digit, List<string> rows, int x, bool reverse) {
+
+		int y = 0;
+
+		foreach (string row in rows) {
+
+			y++;
+
+			char [] chars = row.ToCharArray ();
+
+			for (int i = 0; i < chars.Length; i++) {
+
+				if (chars [i].ToString() == "*") {
+
+					if (reverse) {
+						HidePixel (x + i, y);
+					} else {
+						LightPixel (x + i, y, "Digit");
+					}
+				} else {
+
+					if (reverse) {
+						LightPixel (x + i, y, "Digit");
+					} else {
+						HidePixel (x + i, y);
+					}
+
+				}
+
+			}
+
+
+
+
+
+		}
 
 	}
 
@@ -157,12 +352,16 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 
 		Rows = currentRow;
 
+		SetupNumbers ();
+
+
 
 	}
 
 	public void ClearScreen (bool enabled = false) {
 
-
+		FlashingLights = new List<Image> ();
+		
 		for (int x = 0; x <= Columns; x++) {
 
 			for (int y = 0; y <= Rows; y++) {
@@ -316,7 +515,18 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 	}
 
 
+	public void FlashPixel (int x, int y, string name, float speed) {
 
+		LightPixel (x, y, name);
+
+		FlashingLights.Add (Backlights [x, y]);
+
+		FlashSpeed = speed;
+
+		
+
+
+	}
 
 
 	public void LightPixel (int x, int y, string name) {
@@ -329,6 +539,11 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 			Debug.Log (name);
 
 			PlayNote (PixelToNoteNumber (x, y), Velocities [name]);
+			
+			
+			if (FlashingLights.Contains (Backlights [x, y])) {
+				FlashingLights.Remove (Backlights [x, y]);
+			}
 
 			//Debug.Log ("Note on: " + PixelToNoteNumber (x, y));
 
@@ -345,6 +560,11 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 			Backlights [x, y].name = "None";
 
 			StopNote (PixelToNoteNumber (x, y));
+
+			if (FlashingLights.Contains (Backlights [x, y])) {
+				FlashingLights.Remove (Backlights [x, y]);
+			}
+				
 
 			//Debug.Log ("Note off: " + PixelToNoteNumber (x, y));
 
@@ -363,6 +583,19 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 		if (Backlights != null) {
 			int x = UnityEngine.Random.Range (0, Columns + 1);
 			int y = UnityEngine.Random.Range (0, Rows + 1);
+
+			FlashCounter += Time.deltaTime;
+
+			if (FlashCounter >= FlashSpeed) {
+
+				foreach (Image light in FlashingLights) {
+					light.enabled = !light.enabled;
+				}
+
+				FlashCounter = 0;
+
+
+			}
 
 			//FlipPixel (x, y);
 		}

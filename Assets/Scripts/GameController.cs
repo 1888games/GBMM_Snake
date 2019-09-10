@@ -19,11 +19,21 @@ public class GameController : MonoBehaviourSingleton<GameController>
 	public bool GameReady = false;
 
 	public int FoodCollected = 0;
+
+	public int BestScore = 0;
+
+	public bool Initialised = false;
+	
+	
 	
     // Start is called before the first frame update
     void Start()
     {
 		Invoke ("Initialise", 0.05f);
+
+		BestScore = PlayerPrefs.GetInt ("Best", 0);
+		
+		
     }
 
     // Update is called once per frame
@@ -35,6 +45,13 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 			CheckInput ();
 
+		} else {
+
+			if (Input.anyKeyDown && Initialised) {
+
+				CancelInvoke ();
+				ResetGame ();
+			}
 		}
     	
         
@@ -84,7 +101,7 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 				if (ScreenController.Instance.GetPixelName (x, y) == "None" && Vector2Int.Distance(SnakePosition, new Vector2Int(x,y)) > 3) {
 
-					ScreenController.Instance.LightPixel (x, y, "Food");
+					ScreenController.Instance.FlashPixel (x, y, "Food",0.1f);
 					//Debug.Log ("FOOD: " + x + " / " + y + " ATT: " + attempts);
 		
 					ok = true;
@@ -106,6 +123,37 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 	}
 
+	void GameOver () {
+
+		ScreenController.Instance.ClearScreen (true);
+		Debug.Log ("GAME OVER!!!!!");
+		CancelInvoke ();
+		GameReady = false;
+
+		PlayerPrefs.SetInt ("Best", BestScore);
+
+		Initialised = false;
+
+		Invoke ("DisplayScore", 1.5f);
+		Invoke ("DisplayHighScore", 4f);
+
+
+	}
+
+	void DisplayScore () {
+
+		ScreenController.Instance.DisplayNumber (FoodCollected);
+		Initialised = true;
+
+	}
+
+
+	void DisplayHighScore () {
+
+		ScreenController.Instance.DisplayNumber (BestScore);
+		
+	
+	}
 
 	void MoveSnake () {
 	
@@ -133,11 +181,8 @@ public class GameController : MonoBehaviourSingleton<GameController>
 		DeleteSnake ();
 
 		if (nextPixel == "SnakeTail") {
-			ScreenController.Instance.ClearScreen (true);
-			Debug.Log ("GAME OVER!!!!!");
-			CancelInvoke ();
 
-			Invoke ("ResetGame", 3f);
+			GameOver ();
 			return;
 		}
 
@@ -165,6 +210,11 @@ public class GameController : MonoBehaviourSingleton<GameController>
 		if (nextPixel == "Food") {
 
 			FoodCollected++;
+
+			if (FoodCollected > BestScore) {
+				BestScore = FoodCollected;
+			}
+			
 			ScreenController.Instance.PlayNote (112, 127, 250);
 		
 			AddTailPiece ();
@@ -188,12 +238,16 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 
 		ScreenController.Instance.Initialise ();
-		
 
-		ResetGame ();
-		
-	
 
+		//ResetGame ();
+
+
+		DisplayHighScore ();
+
+		Initialised = true;
+		
+		
 	}
 
 
@@ -258,6 +312,7 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 	void ResetGame () {
 
+	
 		SnakeTrail = new List<Vector2Int> ();
 
 		ScreenController.Instance.ClearScreen ();
