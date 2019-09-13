@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameController : MonoBehaviourSingleton<GameController>
+public class GameController : MonoBehaviour
 {
 
 
@@ -22,24 +22,28 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 	public int BestScore = 0;
 
-	public bool Initialised = false;
+	public bool Initialised;
 	
 	
 	
     // Start is called before the first frame update
-    void Start()
+    void OnEnable()
     {
-		Invoke ("Initialise", 0.05f);
 
+		Initialised = false;
 		BestScore = PlayerPrefs.GetInt ("Best", 0);
+
+		Invoke ("InitialiseSnake", 0.25f);
+
+		
 		
 		
     }
 
     // Update is called once per frame
     void Update()
-    {
 
+    {
 
 		if (GameReady) {
 
@@ -47,7 +51,7 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 		} else {
 
-			if (Input.anyKeyDown && Initialised) {
+			if (Input.anyKeyDown && this.Initialised) {
 
 				CancelInvoke ();
 				ResetGame ();
@@ -234,8 +238,9 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 	}
 
-	void Initialise () {
+	void InitialiseSnake () {
 
+		Debug.Log ("Init1");
 
 		ScreenController.Instance.Initialise ();
 
@@ -243,11 +248,18 @@ public class GameController : MonoBehaviourSingleton<GameController>
 		//ResetGame ();
 
 
+		Debug.Log ("Init2");
+
 		DisplayHighScore ();
 
-		Initialised = true;
-		
-		
+		Debug.Log ("Init3");
+
+
+		this.Initialised = true;
+
+		Debug.Log (Initialised);
+
+
 	}
 
 
@@ -312,6 +324,7 @@ public class GameController : MonoBehaviourSingleton<GameController>
 
 	void ResetGame () {
 
+		Debug.Log ("RESET GAME");
 	
 		SnakeTrail = new List<Vector2Int> ();
 

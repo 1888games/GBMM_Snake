@@ -64,12 +64,15 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 	public Text Output15Text;
 	public Text Output16Text;
 
+	public bool Initialised = false;
+
 
 
 	// Start is called before the first frame update
 	void Start () {
-			
-		
+
+
+		Initialised = false;
 		FlashingLights = new List<Image> ();
 		MidiDevices = new List<string> ();
 
@@ -98,6 +101,8 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 		Velocities.Add ("Food", 60);
 		Velocities.Add ("GameOver", 75);
 		Velocities.Add ("Digit", 50);
+		Velocities.Add ("BlockInPlay", 70);
+		Velocities.Add ("BlockPlaced", 100);
 
 		Channel1Outputs = new Dictionary<int, bool> ();
 		Channel15Outputs = new Dictionary<int, bool> ();
@@ -318,41 +323,46 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 
 	public void Initialise () {
 
-		Backlights = new Image [8, 8];
 
-		float currentY = GameboyGameObjects [0].GetComponent<RectTransform> ().anchoredPosition.y;
-		int currentRow = 0;
-		int currentCol = 0;
-		float thisY = 0f;
+		if (Initialised == false) {
+			Backlights = new Image [8, 8];
 
-		foreach (GameObject go in GameboyGameObjects) {
+			float currentY = GameboyGameObjects [0].GetComponent<RectTransform> ().anchoredPosition.y;
+			int currentRow = 0;
+			int currentCol = 0;
+			float thisY = 0f;
 
-			Image image = go.GetComponent<Image> ();
+			foreach (GameObject go in GameboyGameObjects) {
 
-			thisY = go.GetComponent<RectTransform> ().anchoredPosition.y;
+				Image image = go.GetComponent<Image> ();
 
-			if (currentY != thisY) {
-				Columns = currentCol - 1;
-				currentCol = 0;
-				currentRow++;
+				thisY = go.GetComponent<RectTransform> ().anchoredPosition.y;
+
+				if (currentY != thisY) {
+					Columns = currentCol - 1;
+					currentCol = 0;
+					currentRow++;
+				}
+
+				currentY = thisY;
+
+
+				Backlights [currentCol, currentRow] = image;
+
+				currentCol++;
+
+				image.enabled = false;
+				image.name = "None";
+
+
 			}
 
-			currentY = thisY;
+			Rows = currentRow;
 
-
-			Backlights [currentCol, currentRow] = image;
-
-			currentCol++;
-
-			image.enabled = false;
-			image.name = "None";
-
+			SetupNumbers ();
+			Initialised = true;
 
 		}
-
-		Rows = currentRow;
-
-		SetupNumbers ();
 
 
 
@@ -517,11 +527,12 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 
 	public void FlashPixel (int x, int y, string name, float speed) {
 
-		LightPixel (x, y, name);
+		if (LightPixel (x, y, name)) {
+			
+			FlashingLights.Add (Backlights [x, y]);
 
-		FlashingLights.Add (Backlights [x, y]);
-
-		FlashSpeed = speed;
+			FlashSpeed = speed;
+		}		
 
 		
 
@@ -529,14 +540,14 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 	}
 
 
-	public void LightPixel (int x, int y, string name) {
+	public bool LightPixel (int x, int y, string name) {
 
 		if (PixelExists (x, y)) {
 
 			Backlights [x, y].enabled = true;
 			Backlights [x, y].name = name;
 
-			Debug.Log (name);
+			//Debug.Log (name);
 
 			PlayNote (PixelToNoteNumber (x, y), Velocities [name]);
 			
@@ -547,7 +558,11 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 
 			//Debug.Log ("Note on: " + PixelToNoteNumber (x, y));
 
+			return true;
+
 		}
+
+		return false;
 
 	}
 
@@ -600,7 +615,7 @@ public class ScreenController : MonoBehaviourSingleton<ScreenController> {
 			//FlipPixel (x, y);
 		}
 
-		if (Input.GetKeyDown (KeyCode.Space)) {
+		if (Input.GetKeyDown (KeyCode.O)) {
 
 			OutputMode++;
 
